@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: link-qualification-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: link-qualification-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: link-qualification-redis
+          property: connectionString
+
+  - type: web
+    name: link-qualification-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://link-qualification-backend.onrender.com
+
+  - type: redis
+    name: link-qualification-redis
+    plan: free
+
+databases:
+  - name: link-qualification-db
+    plan: free
+    databaseName: linkqualification
+    user: linkqualuser
